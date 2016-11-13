@@ -1,0 +1,4 @@
+*.o
+.DS_Store
+.DS_Store?
+roms
