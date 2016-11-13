@@ -1,4 +1,4 @@
 *.o
 .DS_Store
-.DS_Store?
+chip_8_emulator
 roms
