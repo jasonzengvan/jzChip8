@@ -6,6 +6,7 @@
 #include <iomanip>		// std::hex
 #include <stdlib.h>     // srand, rand 
 #include <time.h>       // time 
+#include <unistd.h>
 
 void Chip_8::initialize() {
 	pc = 0x200;
@@ -15,8 +16,7 @@ void Chip_8::initialize() {
 
 	// TODO: clear everything
 
-	// TODO: Load fontset
-	unsigned char fontset[80] = { 
+	uint8_t fontset[80] = { 
 		0xF0, 0x90, 0x90, 0x90, 0xF0, // 0
 		0x20, 0x60, 0x20, 0x20, 0x70, // 1
 		0xF0, 0x10, 0xF0, 0x80, 0xF0, // 2
@@ -38,7 +38,6 @@ void Chip_8::initialize() {
 	for (int i = 0; i < 80; i++) {
 		mem[i] = fontset[i];
 	}
-
 }
 
 void Chip_8::load(std::string path) {
@@ -56,12 +55,13 @@ void Chip_8::load(std::string path) {
 
 void Chip_8::cycle() {
 
-	//printStates();
+	// Clock the cycle
+	// usleep(500);
 
 	fetch();
 	decode_execute();
 
-	//update timer
+	update_timers();
 }
 
 void Chip_8::fetch() {
@@ -75,6 +75,7 @@ void Chip_8::decode_execute() {
 	const uint16_t NNN = opcode & 0x0fff;
 	const uint16_t X = (opcode & 0x0f00) >> 8;
 	const uint16_t Y = (opcode & 0x00f0) >> 4;
+	int key_pressed = 0;
 
 	switch(opcode & 0xf000) {
 		case 0x0000:
@@ -296,7 +297,17 @@ void Chip_8::decode_execute() {
 				case 0x000a: 
 					// TODO
 					printf("Waiting for input\n");
-					while(1) {}
+					
+					for (int i = 0; i < 0x10; i++) {
+						if (input[i]) {
+							v[X] = i;
+							key_pressed = 1;
+						}
+					}
+					if (key_pressed) {
+						pc += 2;
+						printf("GOT KEY!!!\n");
+					}	
 				break;
 
 				// FX15: Sets the delay timer to VX
@@ -381,6 +392,16 @@ void Chip_8::clearGraphics() {
 		}
 	}
 	renderFlag = 1;
+}
+
+void Chip_8::update_timers() {
+	if (delay_timer) {
+		delay_timer--;
+	}
+	if(sound_timer) {
+		printf("BEEP!\n");
+		sound_timer--;
+	}
 }
 
 void Chip_8::printStates() {

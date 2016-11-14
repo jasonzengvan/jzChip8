@@ -13,6 +13,7 @@ class Chip_8 {
 	public:
 		uint8_t renderFlag;
 		uint8_t graphics[SCREEN_WIDTH][SCREEN_HEIGHT]; 
+		uint8_t input[0x10];
 
 		void initialize();
 		void load(std::string);
@@ -29,14 +30,14 @@ class Chip_8 {
 		uint16_t pc; // program counter
 		uint16_t stack[0x10]; // stack for return addresses
 		uint16_t sp; // stack pointer
-		
 		uint8_t delay_timer;
 		uint8_t sound_timer;
-		uint8_t input[0x10];
+		
 
 		void renderGraphics();
 		void fetch();
 		void decode_execute();
+		void update_timers();
 		void setInput();
 		void printStates();
 		void clearGraphics();
