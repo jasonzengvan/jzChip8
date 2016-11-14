@@ -1,4 +1,11 @@
 #include "chip_8.h"
+#include <stdint.h>
+#include <string>
+#include <iostream>
+#include <fstream>
+#include <iomanip>		// std::hex
+#include <stdlib.h>     // srand, rand 
+#include <time.h>       // time 
 
 void Chip_8::initialize() {
 	pc = 0x200;
@@ -9,6 +16,29 @@ void Chip_8::initialize() {
 	// TODO: clear everything
 
 	// TODO: Load fontset
+	unsigned char fontset[80] = { 
+		0xF0, 0x90, 0x90, 0x90, 0xF0, // 0
+		0x20, 0x60, 0x20, 0x20, 0x70, // 1
+		0xF0, 0x10, 0xF0, 0x80, 0xF0, // 2
+		0xF0, 0x10, 0xF0, 0x10, 0xF0, // 3
+		0x90, 0x90, 0xF0, 0x10, 0x10, // 4
+		0xF0, 0x80, 0xF0, 0x10, 0xF0, // 5
+		0xF0, 0x80, 0xF0, 0x90, 0xF0, // 6
+		0xF0, 0x10, 0x20, 0x40, 0x40, // 7
+		0xF0, 0x90, 0xF0, 0x90, 0xF0, // 8
+		0xF0, 0x90, 0xF0, 0x10, 0xF0, // 9
+		0xF0, 0x90, 0xF0, 0x90, 0x90, // A
+		0xE0, 0x90, 0xE0, 0x90, 0xE0, // B
+		0xF0, 0x80, 0x80, 0x80, 0xF0, // C
+		0xE0, 0x90, 0x90, 0x90, 0xE0, // D
+		0xF0, 0x80, 0xF0, 0x80, 0xF0, // E
+		0xF0, 0x80, 0xF0, 0x80, 0x80  // F
+	};
+
+	for (int i = 0; i < 80; i++) {
+		mem[i] = fontset[i];
+	}
+
 }
 
 void Chip_8::load(std::string path) {
@@ -16,7 +46,7 @@ void Chip_8::load(std::string path) {
 	if (fin.is_open()) {
 		uint8_t byte;
 		int i = 0x200;
-		while(fin >> byte) {
+		while(fin >> std::noskipws >> byte) {
 			mem[i++] = byte;
 		}
 		fin.close();
@@ -26,7 +56,7 @@ void Chip_8::load(std::string path) {
 
 void Chip_8::cycle() {
 
-	printStates();
+	//printStates();
 
 	fetch();
 	decode_execute();
@@ -40,27 +70,30 @@ void Chip_8::fetch() {
 
 void Chip_8::decode_execute() {
 
-	const uint8_t N = opcode & 0x000f;
-	const uint8_t NN = opcode & 0x00ff;
-	const uint8_t NNN = opcode & 0x0fff;
-	const uint8_t X = (opcode & 0x0f00) >> 8;
-	const uint8_t Y = (opcode & 0x00f0) >> 4;
+	const uint16_t N = opcode & 0x000f;
+	const uint16_t NN = opcode & 0x00ff;
+	const uint16_t NNN = opcode & 0x0fff;
+	const uint16_t X = (opcode & 0x0f00) >> 8;
+	const uint16_t Y = (opcode & 0x00f0) >> 4;
 
 	switch(opcode & 0xf000) {
 		case 0x0000:
 			switch(opcode) {
 				// 00E0: Clears the screen
 				case 0x00e0: 
-					// TODO
+					clearGraphics();
+					pc += 2;
 				break;
 
 				// 00EE: Returns from a subroutine
-				case 0x00ee: 
-					pc = stack[sp--];
+				case 0x00ee:
+					pc = stack[--sp];
+					pc += 2;
 				break;
 
 				default:
 					printf ("Unknown opcode: 0x%X\n", opcode);
+					exit(1);
 			}
 		break;
 
@@ -176,6 +209,8 @@ void Chip_8::decode_execute() {
 
 				default:
 					printf ("Unknown opcode: 0x%X\n", opcode);
+					exit(1);
+
 			}
 		break;
 
@@ -203,25 +238,48 @@ void Chip_8::decode_execute() {
 			pc += 2;
 		break;
 
-		// DXYN: 
+		// DXYN: Draws a sprite at coordinate (VX, VY)
+		// that has a width of 8 pixels and a height of N pixels. 
+		// Each row of 8 pixels is read as bit-coded starting from memory location I; 
+		// I value doesn’t change after the execution of this instruction. 
+		// As described above, VF is set to 
+		// 1 if any screen pixels are flipped from set to unset when the sprite is drawn, 
+		// and to 0 if that doesn’t happen
+
 		case 0xd000: 
-		//TODO 
+			v[0xf] = 0;
+			for(int y = 0; y < N; y++) {
+				uint8_t pixels = mem[index + y];
+				for (int x = 0; x < 8; x++) {
+					if((pixels & (0x80 >> x)) != 0) {
+				        if(graphics[v[X] + x][v[Y] + y] == 1)
+				        	v[0xf] = 1;                                 
+				        graphics[v[X] + x][v[Y] + y] ^= 1;
+				    }
+				}
+			}
+			//renderGraphics();
+			renderFlag = 1;
+			pc += 2;
 		break;
 
 		case 0xe000:
 			switch(opcode & 0x00ff) {
 				// EX9E: Skips the next instruction if the key stored in VX is pressed
 				case 0x009e: 	
-					// TODO
+					if (input[v[X]]) pc += 2;
+					pc += 2;
 				break;
 
 				// EXA1: Skips the next instruction if the key stored in VX isn't pressed
 				case 0x00a1: 
-					// TODO
+					if (!input[v[X]]) pc += 2;
+					pc += 2;
 				break;
 
 				default:								
 					printf ("Unknown opcode: 0x%X\n", opcode);
+					exit(1);
 
 			}
 		break;
@@ -230,62 +288,99 @@ void Chip_8::decode_execute() {
 			switch(opcode & 0x00ff) {
 				// FX07: Sets VX to the value of the delay timer
 				case 0x0007: 
-					// TODO 
+					v[X] = delay_timer;
+					pc += 2;
 				break;
 
 				// FX0A: A key press is awaited, and then stored in VX
 				case 0x000a: 
 					// TODO
+					printf("Waiting for input\n");
+					while(1) {}
 				break;
 
 				// FX15: Sets the delay timer to VX
 				case 0x0015: 
-					// TODO
+					delay_timer = v[X];
+					pc += 2;
 				break;
 
 				// FX18: Sets the sound timer to VX
 				case 0x0018: 
-					// TODO
+					sound_timer = v[X];
+					pc += 2;
 				break;
 
 				// FX1E: Adds VX to I
 				case 0x001e: 
-					// TODO
+					index += v[X];
+					pc += 2;
 				break;
 
 				// FX29: Sets I to the location of the sprite for the character in VX. 
 				// Characters 0-F (in hexadecimal) are represented by a 4x5 font
 				case 0x0029: 
-					// TODO
+					index = v[X] * 5;
+					pc += 2;
 				break;
 
-				// FX33
+				// FX33: Stores the binary-coded decimal representation of VX, 
+				// with the most significant of three digits at the address in I, 
+				// the middle digit at I plus 1, 
+				// and the least significant digit at I plus 2
 				case 0x0033: 
-					// TODO
+					mem[index] = v[X] / 100;
+					mem[index + 1] = (v[X] / 10) % 10;
+					mem[index + 2] = v[X] % 10;
+					pc += 2;
 				break;
 
-				// FX55
+				// FX55: Stores V0 to VX (including VX) in memory starting at address I
 				case 0x0055: 
-					// TODO
+					for (int i = 0; i <= X; i++) 
+						mem[index + i] = v[i];
+					pc += 2;
 				break;
 
-				// FX65
+				// FX65: Fills V0 to VX (including VX) with values from memory starting at address I
 				case 0x0065: 
-					// TODO
+					for (int i = 0; i <= X; i++) 
+						v[i] = mem[index + i];
+					pc += 2;
 				break;
 
 				default:
 					printf ("Unknown opcode: 0x%X\n", opcode);
+					exit(1);
 			}
 		break;
 
 		default: 
 			printf ("Unknown opcode: 0x%X\n", opcode);
+			exit(1);
 	}
 }
 
-void Chip_8::render() {
-	
+void Chip_8::renderGraphics() {
+	for (int i = 0; i < SCREEN_WIDTH; i++) {
+		for (int j = 0; j < SCREEN_HEIGHT; j++) {
+			if (graphics[i][j] == 1)
+				std::cout << "*";
+			else
+				std::cout << " ";
+		}
+		std::cout << std::endl;
+	}
+	std::cout << "-----------------------------------------------------------------" << std::endl;
+}
+
+void Chip_8::clearGraphics() {
+	for (int i = 0; i < SCREEN_WIDTH; i++) {
+		for (int j = 0; j < SCREEN_HEIGHT; j++) {
+			graphics[i][j] = 0;
+		}
+	}
+	renderFlag = 1;
 }
 
 void Chip_8::printStates() {
@@ -298,5 +393,11 @@ void Chip_8::printStates() {
 		std::cout << " = " << (int)v[i] << "    ";
 		if (i % 4 == 3) std::cout << std::endl;
 	}
+	std::cout << "stack = ";
+	for (int i = 0; i < 0x10; i++) {
+		std::cout << std::hex << (int)stack[i];
+		std::cout << " ";
+	}
+	std::cout << std::endl;
 	std::cout << "----------------" << std::endl;
 }

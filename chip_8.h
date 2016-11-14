@@ -1,36 +1,46 @@
+#ifndef __CHIP_8
+#define __CHIP_8
+
 #include <stdint.h>
 #include <string>
-#include <iostream>
-#include <fstream>
-#include <iomanip>		// std::hex
-#include <stdlib.h>     // srand, rand 
-#include <time.h>       // time 
 
+
+
+#define SCREEN_WIDTH 64
+#define SCREEN_HEIGHT 32
 
 class Chip_8 {
 	public:
+		uint8_t renderFlag;
+		uint8_t graphics[SCREEN_WIDTH][SCREEN_HEIGHT]; 
+
 		void initialize();
 		void load(std::string);
 		void cycle();
-		void fetch();
-		void decode_execute();
-		void render();
-		void setInput();
-		void printStates();
+		
 
-		uint8_t renderFlag;
+		
 
 	private:
-		uint8_t mem[0x1000];
-		uint8_t v[0x10];
-		uint16_t opcode;
-		uint16_t index;
-		uint16_t pc;
-		uint8_t stack[0x10];
-		uint8_t sp;
-		uint8_t graphics[64 * 32];
+		uint8_t mem[0x1000]; // 0x1000 byte Memory
+		uint8_t v[0x10]; // 16 Registers v0 - vf
+		uint16_t opcode; // current Opcode
+		uint16_t index; // a memory Index
+		uint16_t pc; // program counter
+		uint16_t stack[0x10]; // stack for return addresses
+		uint16_t sp; // stack pointer
+		
 		uint8_t delay_timer;
 		uint8_t sound_timer;
 		uint8_t input[0x10];
+
+		void renderGraphics();
+		void fetch();
+		void decode_execute();
+		void setInput();
+		void printStates();
+		void clearGraphics();
 	
 };
+
+#endif
