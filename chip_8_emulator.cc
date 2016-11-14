@@ -86,14 +86,20 @@ void releaseKey(unsigned char input, int x, int y) {
 }
 
 int main(int argc, char *argv[]) {
+
+	if (argc != 2) {
+	  std::cerr << "Usage: chip_8_emulator rom_file" << std::endl;
+	  throw std::exception();
+	}
+
 	chip_8.initialize();
-	chip_8.load("roms/HIDDEN");
+	chip_8.load(argv[1]);
 
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA);
 	glutInitWindowSize(SCREEN_WIDTH * PIXEL_SIZE, SCREEN_HEIGHT * PIXEL_SIZE);
 	glutInitWindowPosition(50, 50);
-	glutCreateWindow("OpenGL Setup Test");
+	glutCreateWindow("Chip-8 Emulator by JsnZng");
 	glutDisplayFunc(display);
 	glutIdleFunc(display);
 	glutKeyboardFunc(pressKey);

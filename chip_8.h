@@ -8,6 +8,7 @@
 
 #define SCREEN_WIDTH 64
 #define SCREEN_HEIGHT 32
+#define CLOCK_SPEED 540
 
 class Chip_8 {
 	public:

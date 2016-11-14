@@ -56,7 +56,7 @@ void Chip_8::load(std::string path) {
 void Chip_8::cycle() {
 
 	// Clock the cycle
-	// usleep(500);
+	usleep(1000000/CLOCK_SPEED);
 
 	fetch();
 	decode_execute();
@@ -295,18 +295,15 @@ void Chip_8::decode_execute() {
 
 				// FX0A: A key press is awaited, and then stored in VX
 				case 0x000a: 
-					// TODO
-					printf("Waiting for input\n");
-					
 					for (int i = 0; i < 0x10; i++) {
 						if (input[i]) {
 							v[X] = i;
 							key_pressed = 1;
+							input[i] = 0;
 						}
 					}
 					if (key_pressed) {
 						pc += 2;
-						printf("GOT KEY!!!\n");
 					}	
 				break;
 
