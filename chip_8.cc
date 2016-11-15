@@ -300,7 +300,7 @@ void Chip_8::decode_execute() {
 						if (input[i]) {
 							v[X] = i;
 							key_pressed = 1;
-
+							input[i] = 0;
 						}
 					}
 					if (key_pressed) {
