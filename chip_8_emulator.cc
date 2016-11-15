@@ -43,8 +43,9 @@ void display() {
 		updateScreen(chip_8);
 		glutSwapBuffers();
 		chip_8.renderFlag = 0;
-	} 
+	}
 }
+
 
 void pressKey(unsigned char input, int x, int y) {
 	if(input == '1')      chip_8.input[0x1] = 1;
@@ -91,6 +92,8 @@ int main(int argc, char *argv[]) {
 	  std::cerr << "Usage: chip_8_emulator rom_file" << std::endl;
 	  throw std::exception();
 	}
+
+
 
 	chip_8.initialize();
 	chip_8.load(argv[1]);

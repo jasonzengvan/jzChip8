@@ -50,17 +50,14 @@ void Chip_8::load(std::string path) {
 		}
 		fin.close();
 	}
-
 }
 
 void Chip_8::cycle() {
 
-	// Clock the cycle
-	usleep(1000000/CLOCK_SPEED);
+	//printStates();
 
 	fetch();
 	decode_execute();
-
 	update_timers();
 }
 
@@ -163,6 +160,7 @@ void Chip_8::decode_execute() {
 				// 8XY3: Sets VX to VX xor VY
 				case 0x0003: 
 					v[X] = v[X] ^ v[Y];
+					pc += 2;
 				break;
 
 				// 8XY4: Adds VY to VX 
@@ -259,16 +257,19 @@ void Chip_8::decode_execute() {
 				    }
 				}
 			}
-			//renderGraphics();
 			renderFlag = 1;
 			pc += 2;
+			// FPS ~= 60
+			usleep(16667);
 		break;
 
 		case 0xe000:
 			switch(opcode & 0x00ff) {
 				// EX9E: Skips the next instruction if the key stored in VX is pressed
 				case 0x009e: 	
-					if (input[v[X]]) pc += 2;
+					if (input[v[X]]) {
+						pc += 2;
+					}
 					pc += 2;
 				break;
 
@@ -299,12 +300,12 @@ void Chip_8::decode_execute() {
 						if (input[i]) {
 							v[X] = i;
 							key_pressed = 1;
-							input[i] = 0;
+
 						}
 					}
 					if (key_pressed) {
 						pc += 2;
-					}	
+					}
 				break;
 
 				// FX15: Sets the delay timer to VX
@@ -396,7 +397,7 @@ void Chip_8::update_timers() {
 		delay_timer--;
 	}
 	if(sound_timer) {
-		printf("BEEP!\n");
+		// TODO: BEEP
 		sound_timer--;
 	}
 }
