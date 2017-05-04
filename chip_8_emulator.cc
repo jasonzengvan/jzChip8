@@ -90,7 +90,7 @@ int main(int argc, char *argv[]) {
 
 	if (argc != 2) {
 	  std::cerr << "Usage: chip_8_emulator rom_file" << std::endl;
-	  throw std::exception();
+	  return 0;
 	}
 
 
