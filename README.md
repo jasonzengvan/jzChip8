@@ -7,7 +7,7 @@ This is a Chip-8 emulator written in C++. The implementations are based on [Chip
 ### Platform
 Only executable in Mac now. Should be easy to support other platforms in the future since there are only few platform-specific implementations.
 
-### controls
+### Controls
 Original Chip-8 uses hex inputs, 0x1 - 0xF. This implementation uses the following inputs for convenience.
 
 | | | | |
